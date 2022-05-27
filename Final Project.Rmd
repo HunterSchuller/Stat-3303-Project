@@ -216,7 +216,7 @@ medicine <- 457
 hospTreat <- 1490
 lossMedicine <- medicine*countryD$posBoth + medicine*countryD$falsePos
 lossHospTreat <- hospTreat*countryD$posRate
-```
+``` 
 
 
 
