@@ -1,2 +1,3 @@
 # Stat-3303-Project
 Bayesian Analysis of K9C9 virus across 10 countries and Decision Theory on Country D medical expenses
+This was the final project in a statistics class I had taken. There was a data set given of 100 individuals from 10 different countries with two binary data points for each; one was if the person tested positive or negative on a EZ test of the virus which was not expensive but not always correct, and a positive or negative if they were infected with the virus. With this, I created a hierarchical model to run a JAGS model to estimate the posterior for each country. Then with this, I create a loss function to aid Country D in their decision to give EZ tests to every person, or to pay the hospital costs of a person whilst they are infected. 
