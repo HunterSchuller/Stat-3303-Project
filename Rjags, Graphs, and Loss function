@@ -1,0 +1,62 @@
+niters=50000
+nburns=10000
+nadapt=10000
+nchains=2
+
+country <- c(1:10)
+y <- flu$Infected
+x <- flu$EZK
+n <- length(country)
+theta <- rep(0.5, n)
+numObs <- rep(100, 10)
+numINf <- pull(flu %>% group_by(Country) %>% 
+  summarise(inf = sum(Infected), EZK = sum(EZK)) %>% 
+  select(inf))
+numEZK <- pull(flu %>% group_by(Country) %>% 
+  summarise(inf = sum(Infected), EZK = sum(EZK)) %>% 
+  select(EZK))
+
+mydata = list(n=n,y=y,x=x,country=country)
+
+myinit = list(mu_a = 0, mu_b = 0, sigma_a = 1.5, sigma_b = 1.5, beta=rep(0,n), alpha=rep(0,n))
+
+mod = "model {
+  # likelihood
+  for (i in 1:n) {
+    y[i] ~ dbern(theta[i])
+    logit(theta[i]) <- alpha[country[i]] + beta[country[i]]*x[i]
+  }
+
+  # priors
+  for (j in 1:n) {
+    alpha[j] ~ dnorm(mu_a,tau_sig_a)
+    beta[j] ~ dnorm(mu_b,tau_sig_b)
+  }
+  mu_a ~ dnorm(0,tau_mu_a)
+  mu_b ~ dnorm(0,tau_mu_b)
+  tau_mu_a <- pow(1, -2)
+  tau_mu_b <- pow(1, -2)
+  sigma_a ~ dunif(1,2)
+  sigma_b ~ dunif(1,2)
+  tau_sig_a <- pow(sigma_a, -2)
+  tau_sig_b <- pow(sigma_b, -2)
+  
+}"
+fit=jags.model(textConnection(mod),
+               data=mydata, inits=myinit, n.chains=nchains,n.adapt=nadapt)
+fit.samples=coda.samples(fit,c("theta", "alpha", "beta", "mu_a", "mu_b"),n.iter=niters)
+par(mar=c(1, 1, 1, 1))
+summary(window(fit.samples,start=nburns+nadapt))
+countryD <- flu %>% 
+  filter(Country == 4) %>% 
+  summarize(posRate = sum(Infected == 1)/100, 
+            negRate = sum(Infected == 0)/100,
+            posBoth = sum(Infected == 1 & EZK == 1)/100,
+            negBoth = sum(Infected == 0 & EZK == 0)/100,
+            falseNeg = sum(Infected == 1 & EZK == 0)/100,
+            falsePos = sum(Infected == 0 & EZK == 1)/100,
+            EZKPos = sum(EZK == 1)/100)
+medicine <- 457
+hospTreat <- 1490
+lossMedicine <- medicine*countryD$posBoth + medicine*countryD$falsePos
+lossHospTreat <- hospTreat*countryD$posRate
